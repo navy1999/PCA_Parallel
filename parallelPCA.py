@@ -83,27 +83,28 @@ def benchmark_pca(X, max_workers=64):
     
     return worker_counts, times
 
-# Generate larger sample data
-X = np.random.randn(100000, 1000)  # Increased data size
-scaler = StandardScaler()
-X_scaled = scaler.fit_transform(X)
-
-print(f"Dataset shape: {X_scaled.shape}")
-
-# Run benchmark
-worker_counts, parallel_times = benchmark_pca(X_scaled)
-
-# Plot results
-plt.figure(figsize=(12, 8))
-plt.plot(worker_counts, parallel_times, 'o-', linewidth=2, markersize=4)
-plt.xlabel('Number of Workers')
-plt.ylabel('Time (seconds)')
-plt.title('Parallelized PCA Performance vs Number of Workers (64-core cluster)')
-plt.grid(True, alpha=0.3)
-plt.savefig('pca_performance.png', dpi=300, bbox_inches='tight')
-plt.close()
-
-# Print optimal configuration
-optimal_workers = worker_counts[np.argmin(parallel_times)]
-print(f"Optimal number of workers: {optimal_workers}")
-print(f"Best execution time: {min(parallel_times):.2f} seconds")
+if __name__ == '__main__':
+    # Generate larger sample data
+    X = np.random.randn(100000, 1000)
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(X)
+    
+    print(f"Dataset shape: {X_scaled.shape}")
+    
+    # Run benchmark
+    worker_counts, parallel_times = benchmark_pca(X_scaled)
+    
+    # Plot results
+    plt.figure(figsize=(12, 8))
+    plt.plot(worker_counts, parallel_times, 'o-', linewidth=2, markersize=4)
+    plt.xlabel('Number of Workers')
+    plt.ylabel('Time (seconds)')
+    plt.title('Parallelized PCA Performance vs Number of Workers (64-core cluster)')
+    plt.grid(True, alpha=0.3)
+    plt.savefig('pca_performance.png', dpi=300, bbox_inches='tight')
+    plt.close()
+    
+    # Print optimal configuration
+    optimal_workers = worker_counts[np.argmin(parallel_times)]
+    print(f"Optimal number of workers: {optimal_workers}")
+    print(f"Best execution time: {min(parallel_times):.2f} seconds")
