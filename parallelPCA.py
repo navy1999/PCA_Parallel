@@ -1,7 +1,6 @@
 # pca_parallel.py
 
 import pandas as pd
-from sklearn.preprocessing import StandardScaler
 import numpy as np
 from concurrent.futures import ThreadPoolExecutor
 import time
@@ -30,7 +29,7 @@ def eigen_decomposition(cov_matrix):
     sorted_indices = np.argsort(eig_vals)[::-1]
     return eig_vals[sorted_indices], eig_vecs[:, sorted_indices]
 
-def time_pca(num_threads, num_runs=1):
+def time_pca(num_threads, X_std, num_runs=1):
     total_time = 0
     for _ in range(num_runs):
         start_time = time.time_ns()
@@ -48,7 +47,7 @@ if __name__ == "__main__":
     scaler = StandardScaler()
     X_std = scaler.fit_transform(X)
 
-    thread_execution_times = [(num_threads, time_pca(num_threads)) for num_threads in range(1, 9)]
+    thread_execution_times = [(num_threads, time_pca(num_threads, X_std)) for num_threads in range(8, 65,8)]
 
     single_thread_time = thread_execution_times[0][1]
     speedup = [(num_threads, single_thread_time / exec_time if exec_time > 0 else 0) for num_threads, exec_time in thread_execution_times]
@@ -63,7 +62,7 @@ if __name__ == "__main__":
     plt.title('Execution Time vs Number of Threads for PCA')
     plt.xlabel('Number of Threads')
     plt.ylabel('Execution Time (nanoseconds)')
-    plt.xticks(threads)
+    plt.xticks(range(0, 65, 8))
     plt.grid(True)
 
     plt.subplot(1, 2, 2)
@@ -71,7 +70,7 @@ if __name__ == "__main__":
     plt.title('Speedup vs Number of Threads for PCA')
     plt.xlabel('Number of Threads')
     plt.ylabel('Speedup')
-    plt.xticks(threads)
+    plt.xticks(range(0, 65, 8))
     plt.grid(True)
 
     plt.tight_layout()
