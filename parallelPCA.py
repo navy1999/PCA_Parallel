@@ -33,11 +33,11 @@ def eigen_decomposition(cov_matrix):
 def time_pca(num_threads, X_std, num_runs=1):
     total_time = 0
     for _ in range(num_runs):
-        start_time = time.time_ns()
+        start_time = time.perf_counter()
         cov_matrix = compute_covariance(X_std)
         with ThreadPoolExecutor(max_workers=num_threads) as executor:
             eig_vals, eig_vecs = executor.submit(eigen_decomposition, cov_matrix).result()
-        end_time = time.time_ns()
+        end_time = time.perf_counter()
         total_time += (end_time - start_time)
     return total_time / num_runs
 
