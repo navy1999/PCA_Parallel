@@ -5,6 +5,7 @@ import numpy as np
 from concurrent.futures import ThreadPoolExecutor
 import time
 import matplotlib.pyplot as plt
+from sklearn.preprocessing import StandardScaler
 
 def readAndProcessData():
     df = pd.read_csv('p4dataset2020.txt', header=None, delim_whitespace=True)
