@@ -40,7 +40,7 @@ def time_pca(num_threads, X_std, num_runs=1):
             eig_vals, eig_vecs = executor.submit(eigen_decomposition, cov_matrix).result()
         end_time = time.perf_counter()
         total_time += (end_time - start_time)
-        print(f"Time taken for {num_threads} thread(s) in run {i+1}: {run_time:.6f} seconds")
+        print(f"Time taken for {num_threads} thread(s) in run {i+1}: {total_time:.6f} seconds")
     return total_time / num_runs
 
 if __name__ == "__main__":
