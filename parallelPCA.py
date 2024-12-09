@@ -8,7 +8,6 @@ import logging
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-# Generate synthetic dataset (larger problem size)
 def generate_synthetic_data():
     logging.info("Generating synthetic dataset...")
     X, _ = make_classification(n_samples=10000, n_features=1000, random_state=42)
@@ -23,7 +22,7 @@ def eigen_decomposition(cov_matrix):
     sorted_indices = np.argsort(eig_vals)[::-1]
     return eig_vals[sorted_indices], eig_vecs[:, sorted_indices]
 
-def time_pca(num_threads, X_std, num_runs=1):
+def time_pca(num_threads, X_std, num_runs=5):
     total_time = 0
     for i in range(num_runs):
         start_time = time.perf_counter_ns()
@@ -47,6 +46,20 @@ def plot_execution_times(threads, times, title, filename):
     plt.savefig(filename)
     plt.close()
 
+def calculate_speedup(single_thread_time, execution_times):
+    return [(threads, single_thread_time / exec_time) for threads, exec_time in execution_times]
+
+def plot_speedup(threads, speedup_values, title, filename):
+    plt.figure(figsize=(10, 6))
+    plt.plot(threads, speedup_values, marker='o', linestyle='-', color='g')
+    plt.title(title)
+    plt.xlabel('Number of Threads')
+    plt.ylabel('Speedup')
+    plt.xticks(threads)
+    plt.grid(True)
+    plt.savefig(filename)
+    plt.close()
+
 if __name__ == "__main__":
     try:
         # Generate and preprocess data
@@ -56,23 +69,4 @@ if __name__ == "__main__":
 
         # Test with a wide range of thread counts
         thread_counts_extended = list(range(1, 65, 4))
-        thread_execution_times_extended = [(threads, time_pca(threads, X_std)) for threads in thread_counts_extended]
-
-        # Plot extended execution times
-        threads_ext, times_ext = zip(*thread_execution_times_extended)
-        plot_execution_times(
-            threads_ext,
-            times_ext,
-            "Extended Execution Time vs Number of Threads",
-            "Extended_Execution_Time_vs_Number_of_Threads.png"
-        )
-
-        # Log results for extended thread counts
-        print("Extended Execution Times (nanoseconds):")
-        for thread, time in thread_execution_times_extended:
-            print(f"{thread:2d} thread(s): {time:.2f} ns")
-
-        logging.info("Analysis complete.")
-
-    except Exception as e:
-        logging.error(f"An error occurred: {e}")
+        thread_execution_times_extended = [(threads,
