@@ -69,4 +69,36 @@ if __name__ == "__main__":
 
         # Test with a wide range of thread counts
         thread_counts_extended = list(range(1, 65, 4))
-        thread_execution_times_extended = [(threads,
+        thread_execution_times_extended = [(threads, time_pca(threads, X_std)) for threads in thread_counts_extended]
+
+        # Plot extended execution times
+        threads_ext, times_ext = zip(*thread_execution_times_extended)
+        plot_execution_times(
+            threads_ext,
+            times_ext,
+            "Extended Execution Time vs Number of Threads",
+            "Extended_Execution_Time_vs_Number_of_Threads.png"
+        )
+
+        # Calculate speedup
+        single_thread_time = thread_execution_times_extended[0][1]
+        speedup = calculate_speedup(single_thread_time, thread_execution_times_extended)
+
+        # Plot speedup
+        threads_ext, speedup_values = zip(*speedup)
+        plot_speedup(
+            threads_ext,
+            speedup_values,
+            "Speedup vs Number of Threads",
+            "Speedup_vs_Number_of_Threads.png"
+        )
+
+        # Log results for extended thread counts and speedup
+        print("Extended Execution Times (nanoseconds) and Speedup:")
+        for (thread, time), (_, speedup_val) in zip(thread_execution_times_extended, speedup):
+            print(f"{thread:2d} thread(s): {time:.2f} ns, Speedup: {speedup_val:.2f}x")
+
+        logging.info("Analysis complete.")
+
+    except Exception as e:
+        logging.error(f"An error occurred: {e}")
