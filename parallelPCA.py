@@ -1,104 +1,71 @@
 import numpy as np
-from concurrent.futures import ThreadPoolExecutor
+from sklearn.datasets import make_classification, make_blobs, make_multilabel_classification
+from sklearn.decomposition import PCA
 import time
 import matplotlib.pyplot as plt
-from sklearn.preprocessing import StandardScaler
-from sklearn.datasets import make_classification
 import logging
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-def generate_synthetic_data():
-    logging.info("Generating synthetic dataset...")
-    X, _ = make_classification(n_samples=10000, n_features=1000, random_state=42)
-    logging.info("Synthetic dataset generated.")
-    return X
+# Generate datasets with different types and sizes
+def generate_datasets():
+    logging.info("Generating datasets with different data types and sizes...")
 
-def compute_covariance(X):
-    return np.dot(X.T, X) / (X.shape[0] - 1)
+    # Binary classification dataset (small)
+    binary_data_small, _ = make_classification(n_samples=500, n_features=10, n_classes=2, random_state=42)
 
-def eigen_decomposition(cov_matrix):
-    eig_vals, eig_vecs = np.linalg.eigh(cov_matrix)
-    sorted_indices = np.argsort(eig_vals)[::-1]
-    return eig_vals[sorted_indices], eig_vecs[:, sorted_indices]
+    # Continuous data (medium)
+    continuous_data_medium, _ = make_blobs(n_samples=1000, n_features=50, centers=3, random_state=42)
 
-def time_pca(num_threads, X_std, num_runs=5):
-    total_time = 0
-    for i in range(num_runs):
-        start_time = time.perf_counter_ns()
-        cov_matrix = compute_covariance(X_std)
-        with ThreadPoolExecutor(max_workers=num_threads) as executor:
-            eig_vals, eig_vecs = executor.submit(eigen_decomposition, cov_matrix).result()
-        end_time = time.perf_counter_ns()
-        run_time = end_time - start_time
-        total_time += run_time
-        logging.info(f"Time taken for {num_threads} thread(s) in run {i+1}: {run_time / 1e6:.3f} ms")
-    return total_time / num_runs  # Return average time in nanoseconds
+    # Multilabel classification dataset (large)
+    categorical_data_large, _ = make_multilabel_classification(n_samples=5000, n_features=100, n_classes=5, random_state=42)
 
-def plot_execution_times(threads, times, title, filename):
+    logging.info("Datasets generated successfully.")
+    return binary_data_small, continuous_data_medium, categorical_data_large
+
+# Run PCA and measure execution time
+def run_pca_and_measure_time(data):
+    logging.info(f"Running PCA on dataset with shape {data.shape}...")
+    start_time = time.perf_counter()
+    pca = PCA()
+    pca.fit(data)
+    end_time = time.perf_counter()
+    execution_time = end_time - start_time
+    logging.info(f"PCA completed in {execution_time:.4f} seconds.")
+    return execution_time
+
+# Plot execution times for different datasets
+def plot_execution_times(dataset_labels, times):
     plt.figure(figsize=(10, 6))
-    plt.plot(threads, times, marker='o', linestyle='-', color='b')
-    plt.title(title)
-    plt.xlabel('Number of Threads')
-    plt.ylabel('Execution Time (nanoseconds)')
-    plt.xticks(threads)
-    plt.grid(True)
-    plt.savefig(filename)
-    plt.close()
-
-def calculate_speedup(single_thread_time, execution_times):
-    return [(threads, single_thread_time / exec_time) for threads, exec_time in execution_times]
-
-def plot_speedup(threads, speedup_values, title, filename):
-    plt.figure(figsize=(10, 6))
-    plt.plot(threads, speedup_values, marker='o', linestyle='-', color='g')
-    plt.title(title)
-    plt.xlabel('Number of Threads')
-    plt.ylabel('Speedup')
-    plt.xticks(threads)
-    plt.grid(True)
-    plt.savefig(filename)
-    plt.close()
+    plt.bar(dataset_labels, times, color=['blue', 'orange', 'green'])
+    plt.title("PCA Execution Time for Different Dataset Types and Sizes")
+    plt.xlabel("Dataset Type and Size")
+    plt.ylabel("Execution Time (seconds)")
+    plt.grid(axis='y')
+    plt.savefig("pca_execution_times.png")
+    plt.show()
 
 if __name__ == "__main__":
     try:
-        # Generate and preprocess data
-        X = generate_synthetic_data()
-        scaler = StandardScaler()
-        X_std = scaler.fit_transform(X)
+        # Generate datasets
+        binary_data_small, continuous_data_medium, categorical_data_large = generate_datasets()
 
-        # Test with a wide range of thread counts
-        thread_counts_extended = list(range(1, 65, 4))
-        thread_execution_times_extended = [(threads, time_pca(threads, X_std)) for threads in thread_counts_extended]
+        # Measure PCA execution times
+        small_pca_time = run_pca_and_measure_time(binary_data_small)
+        medium_pca_time = run_pca_and_measure_time(continuous_data_medium)
+        large_pca_time = run_pca_and_measure_time(categorical_data_large)
 
-        # Plot extended execution times
-        threads_ext, times_ext = zip(*thread_execution_times_extended)
-        plot_execution_times(
-            threads_ext,
-            times_ext,
-            "Extended Execution Time vs Number of Threads",
-            "Extended_Execution_Time_vs_Number_of_Threads.png"
-        )
+        # Dataset labels and times for plotting
+        dataset_labels = ["Binary (500x10)", "Continuous (1000x50)", "Categorical (5000x100)"]
+        times = [small_pca_time, medium_pca_time, large_pca_time]
 
-        # Calculate speedup
-        single_thread_time = thread_execution_times_extended[0][1]
-        speedup = calculate_speedup(single_thread_time, thread_execution_times_extended)
+        # Plot the results
+        plot_execution_times(dataset_labels, times)
 
-        # Plot speedup
-        threads_ext, speedup_values = zip(*speedup)
-        plot_speedup(
-            threads_ext,
-            speedup_values,
-            "Speedup vs Number of Threads",
-            "Speedup_vs_Number_of_Threads.png"
-        )
-
-        # Log results for extended thread counts and speedup
-        print("Extended Execution Times (nanoseconds) and Speedup:")
-        for (thread, time), (_, speedup_val) in zip(thread_execution_times_extended, speedup):
-            print(f"{thread:2d} thread(s): {time:.2f} ns, Speedup: {speedup_val:.2f}x")
-
-        logging.info("Analysis complete.")
+        # Log the results
+        logging.info("Execution Times:")
+        for label, time in zip(dataset_labels, times):
+            logging.info(f"{label}: {time:.4f} seconds")
 
     except Exception as e:
         logging.error(f"An error occurred: {e}")
