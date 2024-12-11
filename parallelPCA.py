@@ -44,7 +44,7 @@ if __name__ == "__main__":
         (10000, 5000)
     ]
 
-    thread_counts = [1, 2, 4, 8, 16, 32, 64]
+    thread_counts = [1, 2, 4, 8, 12, 16 ,24, 32 ,40 ,56 ,64]
     results = {}
 
     for n_samples, n_features in dataset_configs:
