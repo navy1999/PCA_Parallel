@@ -87,28 +87,11 @@ def benchmark_parallelization(num_samples_list, num_features_list, num_threads_l
     
     return speedups
 
-# Plotting the benchmark results
-# def plot_speedup(speedups, num_samples_list, num_features_list, num_threads_list):
-#     plt.figure(figsize=(10, 6))
-    
-#     # Iterate through the speedups dictionary to plot times
-#     for num_samples in num_samples_list:
-#         for num_features in num_features_list:
-#             times = speedups[(num_samples, num_features)]
-#             plt.plot(num_threads_list, times, label=f'Samples: {num_samples}, Features: {num_features}')
-    
-#     plt.xlabel('Number of Threads')
-#     plt.ylabel('Training Time (seconds)')
-#     plt.title('Benchmarking Neural Network Parallelization')
-#     plt.legend()
-#     plt.grid(True)
-#     plt.show()
 
 # Define the list of parameters for the benchmark
-num_samples_list = [1000, 5000]
-num_features_list = [32, 64]
+num_samples_list = [1000, 5000, 10000]
+num_features_list = [10, 100, 1000]
 num_threads_list = [1, 2, 4, 8]
 
 # Run the benchmark and plot the speedup
 speedups = benchmark_parallelization(num_samples_list, num_features_list, num_threads_list)
-# plot_speedup(speedups, num_samples_list, num_features_list, num_threads_list) // plotting fails - need to fix! 
