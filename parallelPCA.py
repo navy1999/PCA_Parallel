@@ -1,71 +1,94 @@
 import numpy as np
-from sklearn.datasets import make_classification, make_blobs, make_multilabel_classification
-from sklearn.decomposition import PCA
+from concurrent.futures import ThreadPoolExecutor
 import time
 import matplotlib.pyplot as plt
-import logging
+from sklearn.preprocessing import StandardScaler
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+# Function to generate synthetic datasets with varying dimensions and sample sizes
+def generate_dataset(n_samples, n_features):
+    return np.random.rand(n_samples, n_features)
 
-# Generate datasets with different types and sizes
-def generate_datasets():
-    logging.info("Generating datasets with different data types and sizes...")
+# Compute covariance matrix
+def compute_covariance(X):
+    return np.dot(X.T, X) / (X.shape[0] - 1)
 
-    # Binary classification dataset (small)
-    binary_data_small, _ = make_classification(n_samples=500, n_features=10, n_classes=2, random_state=42)
+# Eigen decomposition
+def eigen_decomposition(cov_matrix):
+    eig_vals, eig_vecs = np.linalg.eigh(cov_matrix)
+    sorted_indices = np.argsort(eig_vals)[::-1]
+    return eig_vals[sorted_indices], eig_vecs[:, sorted_indices]
 
-    # Continuous data (medium)
-    continuous_data_medium, _ = make_blobs(n_samples=1000, n_features=50, centers=3, random_state=42)
-
-    # Multilabel classification dataset (large)
-    categorical_data_large, _ = make_multilabel_classification(n_samples=5000, n_features=100, n_classes=5, random_state=42)
-
-    logging.info("Datasets generated successfully.")
-    return binary_data_small, continuous_data_medium, categorical_data_large
-
-# Run PCA and measure execution time
-def run_pca_and_measure_time(data):
-    logging.info(f"Running PCA on dataset with shape {data.shape}...")
-    start_time = time.perf_counter()
-    pca = PCA()
-    pca.fit(data)
-    end_time = time.perf_counter()
-    execution_time = end_time - start_time
-    logging.info(f"PCA completed in {execution_time:.4f} seconds.")
-    return execution_time
-
-# Plot execution times for different datasets
-def plot_execution_times(dataset_labels, times):
-    plt.figure(figsize=(10, 6))
-    plt.bar(dataset_labels, times, color=['blue', 'orange', 'green'])
-    plt.title("PCA Execution Time for Different Dataset Types and Sizes")
-    plt.xlabel("Dataset Type and Size")
-    plt.ylabel("Execution Time (seconds)")
-    plt.grid(axis='y')
-    plt.savefig("pca_execution_times.png")
-    plt.show()
+# Time PCA with a given number of threads
+def time_pca(num_threads, X_std, num_runs=1):
+    total_time = 0
+    for _ in range(num_runs):
+        start_time = time.perf_counter()
+        cov_matrix = compute_covariance(X_std)
+        with ThreadPoolExecutor(max_workers=num_threads) as executor:
+            eig_vals, eig_vecs = executor.submit(eigen_decomposition, cov_matrix).result()
+        end_time = time.perf_counter()
+        total_time += (end_time - start_time)
+    return total_time / num_runs
 
 if __name__ == "__main__":
-    try:
-        # Generate datasets
-        binary_data_small, continuous_data_medium, categorical_data_large = generate_datasets()
+    # Dataset configurations: (number of samples, number of features)
+    dataset_configs = [
+        (1000, 50),
+        (5000, 100),
+        (10000, 200),
+        (20000, 500),
+    ]
 
-        # Measure PCA execution times
-        small_pca_time = run_pca_and_measure_time(binary_data_small)
-        medium_pca_time = run_pca_and_measure_time(continuous_data_medium)
-        large_pca_time = run_pca_and_measure_time(categorical_data_large)
+    thread_counts = [1, 2, 4, 8, 16, 32, 64]
+    results = {}
 
-        # Dataset labels and times for plotting
-        dataset_labels = ["Binary (500x10)", "Continuous (1000x50)", "Categorical (5000x100)"]
-        times = [small_pca_time, medium_pca_time, large_pca_time]
+    for n_samples, n_features in dataset_configs:
+        print(f"Processing dataset with {n_samples} samples and {n_features} features...")
+        X = generate_dataset(n_samples, n_features)
 
-        # Plot the results
-        plot_execution_times(dataset_labels, times)
+        # Standardize the dataset
+        scaler = StandardScaler()
+        X_std = scaler.fit_transform(X)
 
-        # Log the results
-        logging.info("Execution Times:")
-        for label, time in zip(dataset_labels, times):
-            logging.info(f"{label}: {time:.4f} seconds")
+        # Measure execution times for different thread counts
+        thread_execution_times = [
+            (num_threads, time_pca(num_threads, X_std))
+            for num_threads in thread_counts
+        ]
 
-    except Exception as e:
-        logging.error(f"An error occurred: {e}")
+        single_thread_time = thread_execution_times[0][1]
+        speedup = [
+            (num_threads, single_thread_time / exec_time if exec_time > 0 else 0)
+            for num_threads, exec_time in thread_execution_times
+        ]
+
+        results[(n_samples, n_features)] = {
+            "execution_times": thread_execution_times,
+            "speedups": speedup,
+        }
+
+    # Plot results
+    plt.figure(figsize=(14, len(dataset_configs) * 6))
+
+    for i, ((n_samples, n_features), data) in enumerate(results.items(), start=1):
+        threads, times = zip(*data["execution_times"])
+        _, speedups = zip(*data["speedups"])
+
+        plt.subplot(len(dataset_configs), 2, i * 2 - 1)
+        plt.plot(threads, times, marker="o", linestyle="-", color="r")
+        plt.title(f"Execution Time ({n_samples} samples x {n_features} features)")
+        plt.xlabel("Number of Threads")
+        plt.ylabel("Execution Time (seconds)")
+        plt.grid(True)
+
+        plt.subplot(len(dataset_configs), 2, i * 2)
+        plt.plot(threads, speedups, marker="o", linestyle="-", color="b")
+        plt.title(f"Speedup ({n_samples} samples x {n_features} features)")
+        plt.xlabel("Number of Threads")
+        plt.ylabel("Speedup")
+        plt.grid(True)
+
+    plt.tight_layout()
+    plt.savefig("pca_performance_comparison.png")
+    plt.show()
+
