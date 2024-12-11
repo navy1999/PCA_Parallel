@@ -34,9 +34,14 @@ if __name__ == "__main__":
     # Dataset configurations: (number of samples, number of features)
     dataset_configs = [
         (1000, 50),
-        (5000, 100),
-        (10000, 200),
-        (20000, 500),
+        (1000, 500),
+        (1000, 5000),
+        (5000, 50),
+        (5000,500),
+        (5000,5000),
+        (10000, 50),
+        (10000, 500),
+        (10000,5000)
     ]
 
     thread_counts = [1, 2, 4, 8, 16, 32, 64]
