@@ -37,11 +37,11 @@ if __name__ == "__main__":
         (1000, 500),
         (1000, 5000),
         (5000, 50),
-        (5000,500),
-        (5000,5000),
+        (5000, 500),
+        (5000, 5000),
         (10000, 50),
         (10000, 500),
-        (10000,5000)
+        (10000, 5000)
     ]
 
     thread_counts = [1, 2, 4, 8, 16, 32, 64]
@@ -72,28 +72,34 @@ if __name__ == "__main__":
             "speedups": speedup,
         }
 
-    # Plot results
-    plt.figure(figsize=(14, len(dataset_configs) * 6))
+    # Plot results in one image with legends
+    plt.figure(figsize=(14, 12))
 
-    for i, ((n_samples, n_features), data) in enumerate(results.items(), start=1):
+    # Plot Execution Time
+    plt.subplot(2, 1, 1)
+    for ((n_samples, n_features), data) in results.items():
         threads, times = zip(*data["execution_times"])
+        plt.plot(threads, times, marker="o", linestyle="-", label=f"{n_samples}x{n_features}")
+
+    plt.title("Execution Time vs Number of Threads")
+    plt.xlabel("Number of Threads")
+    plt.ylabel("Execution Time (seconds)")
+    plt.grid(True)
+    plt.legend(title="Dataset Size")
+    
+    # Plot Speedup
+    plt.subplot(2, 1, 2)
+    for ((n_samples, n_features), data) in results.items():
+        threads, _ = zip(*data["execution_times"])
         _, speedups = zip(*data["speedups"])
+        plt.plot(threads, speedups, marker="o", linestyle="-", label=f"{n_samples}x{n_features}")
 
-        plt.subplot(len(dataset_configs), 2, i * 2 - 1)
-        plt.plot(threads, times, marker="o", linestyle="-", color="r")
-        plt.title(f"Execution Time ({n_samples} samples x {n_features} features)")
-        plt.xlabel("Number of Threads")
-        plt.ylabel("Execution Time (seconds)")
-        plt.grid(True)
-
-        plt.subplot(len(dataset_configs), 2, i * 2)
-        plt.plot(threads, speedups, marker="o", linestyle="-", color="b")
-        plt.title(f"Speedup ({n_samples} samples x {n_features} features)")
-        plt.xlabel("Number of Threads")
-        plt.ylabel("Speedup")
-        plt.grid(True)
+    plt.title("Speedup vs Number of Threads")
+    plt.xlabel("Number of Threads")
+    plt.ylabel("Speedup")
+    plt.grid(True)
+    plt.legend(title="Dataset Size")
 
     plt.tight_layout()
     plt.savefig("pca_performance_comparison.png")
     plt.show()
-
