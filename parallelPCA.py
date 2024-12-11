@@ -19,7 +19,7 @@ def eigen_decomposition(cov_matrix):
     return eig_vals[sorted_indices], eig_vecs[:, sorted_indices]
 
 # Time PCA with a given number of threads
-def time_pca(num_threads, X_std, num_runs=1):
+def time_pca(num_threads, X_std, num_runs=5):
     total_time = 0
     for _ in range(num_runs):
         start_time = time.perf_counter()
