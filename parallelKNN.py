@@ -33,7 +33,7 @@ if __name__ == "__main__":
 
     # Measure speedup
     k = 5
-    num_threads_list = [1,2,4,8,16,32,64]
+    num_threads_list = [1, 2, 4, 8, 12, 16 ,24, 32 ,40 ,56 ,64]
     speedups = []
 
     # Single-threaded baseline

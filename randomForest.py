@@ -49,8 +49,9 @@ def benchmark_random_forest(X, y, max_threads=None, n_estimators=100):
     
     # Benchmark results storage
     results = []
+    jobs = [1, 2, 4, 8, 12, 16 ,24, 32 ,40 ,56 ,64]
     
-    for n_jobs in range(1, max_threads + 1):
+    for n_jobs in jobs:
         start_time = time.time()
         
         # Create and train RandomForest
@@ -83,32 +84,33 @@ def main():
     Main function to demonstrate parallel RandomForest performance.
     """
     # Dataset sizes to test
-    dataset_sizes = [1000, 10000, 100000]
-    feature_count = 20
+    dataset_sizes = [1000, 5000, 10000]
+    feature_count = [10, 100, 1000]
     
     print("Parallel Random Forest Performance Benchmarking")
     print("=" * 50)
     
     for size in dataset_sizes:
-        print(f"\nDataset Size: {size} samples")
-        
-        # Generate dataset
-        X, y = generate_dataset(size, feature_count)
-        
-        # Benchmark performance
-        results = benchmark_random_forest(X, y)
-        
-        # Display results
-        print("\nPerformance Metrics:")
-        print(results)
-        
-        # Calculate and print speedup
-        baseline_time = results.loc[0, 'Training Time (s)']
-        results['Speedup'] = baseline_time / results['Training Time (s)']
-        
-        print("\nSpeedup Comparison:")
-        print(results[['Threads', 'Speedup']])
-        print("-" * 50)
+        for feature in feature_count:
+            print(f"\nDataset Size: {size} samples")
+            
+            # Generate dataset
+            X, y = generate_dataset(size, feature)
+            
+            # Benchmark performance
+            results = benchmark_random_forest(X, y)
+            
+            # Display results
+            print("\nPerformance Metrics:")
+            print(results)
+            
+            # Calculate and print speedup
+            baseline_time = results.loc[0, 'Training Time (s)']
+            results['Speedup'] = baseline_time / results['Training Time (s)']
+            
+            print("\nSpeedup Comparison:")
+            print(results[['Threads', 'Speedup']])
+            print("-" * 50)
 
 if __name__ == '__main__':
     main()

@@ -91,7 +91,7 @@ def benchmark_parallelization(num_samples_list, num_features_list, num_threads_l
 # Define the list of parameters for the benchmark
 num_samples_list = [1000, 5000, 10000]
 num_features_list = [10, 100, 1000]
-num_threads_list = [1, 2, 4, 8]
+num_threads_list = [1, 2, 4, 8, 12, 16 ,24, 32 ,40 ,56 ,64]
 
 # Run the benchmark and plot the speedup
 speedups = benchmark_parallelization(num_samples_list, num_features_list, num_threads_list)

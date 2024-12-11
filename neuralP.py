@@ -127,7 +127,7 @@ def benchmark_parallel_network():
     # Reduce dataset sizes for faster testing
     dataset_sizes = [1000, 5000, 10000]
     feature_sizes = [10, 100, 1000]
-    thread_counts = [1, 2, 4, 6, 8, 10, 12]
+    thread_counts = [1, 2, 4, 8, 12, 16 ,24, 32 ,40 ,56 ,64]
     
     results = {
         'dataset_size': [],
